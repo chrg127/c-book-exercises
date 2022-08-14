@@ -1,3 +1,9 @@
+/*
+ * Write a program to copy its output, replacing each
+ * tab by \t, each backspace by \b, and each backslash by \\. This makes tab
+ * and backspaces visible in an unambigous way.
+ */
+
 #include <stdio.h>
 
 int main(void)

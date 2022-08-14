@@ -5,7 +5,7 @@
 #define IN  1   /* inside a word */
 #define OUT 0   /* outside a word */
 
-/* count lines, words, and characters in input */
+/* copy inpuy to output, one word per line */
 int main(void)
 {
     int c, state;
