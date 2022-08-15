@@ -1,24 +1,39 @@
-/* setbits: set the bits of x beginning at  to the rightmost bits of y.
- * bits are counted backwards: 11110000
- *                             76543210
+/*
+ * Write a function setbits(x, p, n, y) that returns x with the n
+ * bits that begin at position p set to the rightmost n bits of y,
+ * leaving the other bits unchanged.
  */
-char setbits(char x, char p, char n, char y)
+
+#include <stdio.h>
+#include <math.h>
+
+unsigned int bitmask(unsigned int n)
 {
-    char shift, andop, orop1, orop2;
-
-    shift = p - n;
-    andop = ((char) pow(2, (double) n)) - 1;
-    if (shift > 0) {
-        orop1 = x & ~(andop << shift);
-        orop2 = (y & andop) << shift;
-    } else if (shift < 0) {
-        shift *= -1;
-        orop1 = x & !(andop >> shift);
-        orop2 = (y & andop) >> shift;
-    } else {
-        orop1 = x & !(andop);
-        orop2 = (y & andop);
-    }
-
-    return orop1 | orop2;
+    return (1u << n) - 1u;
 }
+
+unsigned int setbits(unsigned int x, unsigned int p, unsigned int n, unsigned int y)
+{
+    unsigned int mask, left, right;
+    mask = bitmask(n);
+    /* take the unchanged part of x. */
+    left = ~(mask << p);
+    left = x & left;
+    /* get the rightmost n bits of y and shift them. */
+    right = (y & mask) << p;
+    /* join the two parts. */
+    return left | right;
+    /* also could've been done in one single expression:
+     * return (x & ~(mask << p)) | (y & mask) << p; */
+}
+
+/* tests */
+int main(void)
+{
+    unsigned int x = 0xffff;
+    unsigned int y = 0;
+    unsigned int r = setbits(x, 1, 3, y);
+    printf("%x\n", r);
+    return 0;
+}
+
