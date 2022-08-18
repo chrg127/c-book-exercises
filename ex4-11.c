@@ -1,12 +1,12 @@
 /*
- * Add commands for handling variables. (It's easy to provide twenty-six
- * variables with single-letter names.) Add a variable for the most recently
- * printed value.
+ * Modify getop so that it doesn't need to use ungetch. Hint:
+ * use an internal static variable.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 #define MAXOP   100  /* max size of operand or operator */
 #define NUMBER  '0'  /* signal that a number was found */
@@ -35,7 +35,6 @@ int main(void)
     int type, i;
     double op1, op2;
     char s[MAXOP];
-    /* variable array. the z variable is the most recently printed value. */
     double variables[26];
 
     /* initialize all variables */
@@ -194,9 +193,12 @@ void ungetch(int);
 int getop(char s[])
 {
     int i, c;
+    static int buf = ' ';
 
-    while (s[0] = c = getch(), c == ' ' || c == '\t')
-        ;
+    s[0] = c = buf;
+    buf = ' ';
+    while (c == ' ' || c == '\t')
+        s[0] = c = getchar();
     s[1] = '\0';
 
     /* check for variable. */
@@ -207,32 +209,14 @@ int getop(char s[])
         return c;   /* not a number */
     i = 0;
     if (isdigit(c)) /* collect integer part */
-        while (isdigit(s[++i] = c = getch()))
+        while (isdigit(s[++i] = c = getchar()))
             ;
     if (c == '.')   /* collect fraction part */
-        while (isdigit(s[++i] = c = getch()))
+        while (isdigit(s[++i] = c = getchar()))
             ;
     s[i] = '\0';
     if (c != EOF)
-        ungetch(c);
+        buf = c;
     return NUMBER;
-}
-
-#define BUFSIZE 100
-
-char buf[BUFSIZE];  /* buffer for ungetch */
-int  bufp = 0;      /* next free position in buf */
-
-int getch(void)     /* get a (possibly pushed back) character */
-{
-    return (bufp > 0) ? buf[--bufp] : getchar();
-}
-
-void ungetch(int c) /* push character back on input */
-{
-    if (bufp >= BUFSIZE)
-        printf("ungetch: too many characters\n");
-    else
-        buf[bufp++] = c;
 }
 

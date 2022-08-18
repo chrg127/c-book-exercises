@@ -42,7 +42,7 @@ int main(void)
 
     /* initialize all variables */
     for (i = 0; i < 26; i++)
-        variables[i] = 1.0;
+        variables[i] = 0.0;
 
     while (type = getop(s), type != EOF) {
         switch (type) {
