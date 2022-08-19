@@ -12,7 +12,7 @@
 #define MAXSTR 100
 #define TABSTOP 4
 
-void move_left(char str[], size_t len);
+void move_left(char str[], int len);
 int string_compare(char s[], char t[]);
 
 int main(int argc, char **argv)
@@ -56,9 +56,9 @@ int main(int argc, char **argv)
 void move_left(char str[], int len)
 {
     int i;
-    for (i = 0; i < len; i++) {
+
+    for (i = 0; i < len; i++)
         str[i] = str[i+1];
-    }
 }
 
 int string_compare(char s[], char t[])
