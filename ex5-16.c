@@ -1,6 +1,7 @@
 /*
- * Modify the sort program to handle a -r flag, which indicates
- * sorting in reverse (decreasing) order. Be sure that -r works with -n.
+ * Add the -d ("directory order") option, which makes comparisons
+ * only on letters, numbers and blanks. Make sure it works in conjunction
+ * with -f.
  */
 
 #include <stdio.h>
@@ -9,35 +10,37 @@
 
 #define MAXLINES 5000       /* max #lines to be sorted */
 
+#define NUMERIC     1 << 0
+#define REVERSE     1 << 1
+#define FOLD        1 << 2
+#define DIRECTORY   1 << 3
+
+typedef int (*CompFunc)(const char *, const char *);
+
 char *lineptr[MAXLINES];    /* pointers to text lines */
 
 int readlines(char *lineptr[], int nlines);
 void writelines(char *lineptr[], int nlines);
 void quicksort(void *lineptr[], int left, int right, int (*comp)(void *, void *));
-int numcmp(const char *s1, const char *s2);
-int numcmp_reverse(const char *s1, const char *s2);
-int strcmp_reverse(const char *s1, const char *s2);
+CompFunc get_comp_func(int flags);
 
 /* sort input lines */
 int main(int argc, char *argv[])
 {
     int nlines;         /* number of input lines read */
-    int numeric = 0;    /* 1 if numeric sort */
-    int reverse = 0;    /* 1 if reverse sort */
+    int flags = 0;
 
     if (argc > 1) {
         if (strcmp(argv[1], "-n") == 0)
-            numeric = 1;
+            flags |= NUMERIC;
         else if (strcmp(argv[1], "-r") == 0)
-            reverse = 1;
+            flags |= REVERSE;
+        else if (strcmp(argv[1], "-f") == 0)
+            flags |= FOLD;
     }
     if (nlines = readlines(lineptr, MAXLINES), nlines >= 0) {
         quicksort((void **) lineptr, 0, nlines-1,
-            (int (*) (void *, void *))
-            (numeric && reverse ? numcmp_reverse
-          : numeric            ? numcmp
-          : reverse            ? strcmp_reverse
-          :                      strcmp));
+            (int (*) (void *, void *)) get_comp_func(flags));
         writelines(lineptr, nlines);
         return 0;
     } else {
@@ -125,10 +128,12 @@ void quicksort(void *v[], int left, int right, int (*comp)(void *, void *))
     quicksort(v, last+1, right, comp);
 }
 
-/* numcmp: compare s1 and s2 numerically
+/*
+ * numcmp: compare s1 and s2 numerically
  * note that this version uses const char instead of char due
  * to strcmp's arguments being const char; having them as char
- * produced a warning on my compiler. */
+ * produced a warning on my compiler.
+ */
 int numcmp(const char *s1, const char *s2)
 {
     double v1, v2;
@@ -143,24 +148,77 @@ int numcmp(const char *s1, const char *s2)
         return 0;
 }
 
+int strcasecmp_reverse(const char *s1, const char *s2)
+{
+    int r = strcasecmp(s1, s2);
+    return r < 0 ? 1 : r > 0 ? -1 : 0;
+}
+
 int numcmp_reverse(const char *s1, const char *s2)
 {
-    int r;
-
-    r = numcmp(s1, s2);
-    return r == -1 ?  1
-         : r ==  1 ? -1
-         : 0;
+    int r = numcmp(s1, s2);
+    return r < 0 ? 1 : r > 0 ? -1 : 0;
 }
 
 int strcmp_reverse(const char *s1, const char *s2)
 {
-    int r;
+    int r = strcmp(s1, s2);
+    return r < 0 ? 1 : r > 0 ? -1 : 0;
+}
 
-    r = strcmp(s1, s2);
-    return r == -1 ?  1
-         : r ==  1 ? -1
-         : 0;
+int isalnumblank(int c)
+{
+    return isalnum(c) && isspace(c);
+}
+
+int dircmp(const char *s1, const char *s2)
+{
+    for ( ; *s1 != '\0' && *s2 != '\0'; s1++, s2++) {
+        if (*s1 == *s2)
+            continue;
+        if (isalnumblank(*s1) && isalnumblank(*s2))
+            continue;
+        return *s1 < *s2 ? -1 : 1;
+    }
+    return 0;
+}
+
+int dircasecmp(const char *s1, const char *s2)
+{
+    for ( ; *s1 != '\0' && *s2 != '\0'; s1++, s2++) {
+        if (toupper(*s1) == toupper(*s2))
+            continue;
+        if (!isalnumblank(*s1) && !isalnumblank(*s2))
+            continue;
+        return *s1 < *s2 ? -1 : 1;
+    }
+    return 0;
+}
+
+int dircmp_reverse(const char *s1, const char *s2)
+{
+    int r = dircmp(s1, s2);
+    return r < 0 ? 1 : r > 0 ? -1 : 0;
+}
+
+int dircasecmp_reverse(const char *s1, const char *s2)
+{
+    int r = dircasecmp(s1, s2);
+    return r < 0 ? 1 : r > 0 ? -1 : 0;
+}
+
+CompFunc get_comp_func(int flags)
+{
+    return (flags & NUMERIC)                        && (flags & REVERSE) ? numcmp_reverse
+         : (flags & NUMERIC)                                             ? numcmp
+         : (flags & FOLD)    && (flags & DIRECTORY) && (flags & REVERSE) ? dircasecmp_reverse
+         : (flags & FOLD)    && (flags & DIRECTORY)                      ? dircasecmp
+         :                      (flags & DIRECTORY) && (flags & REVERSE) ? dircmp_reverse
+         :                      (flags & DIRECTORY)                      ? dircmp
+         : (flags & FOLD)    && (flags & REVERSE)                        ? strcasecmp_reverse
+         : (flags & FOLD)                                                ? strcasecmp
+         :                                             (flags & REVERSE) ? strcmp_reverse
+         :                                                                 strcmp;
 }
 
 void swap(void *v[], int i, int j)
