@@ -99,7 +99,7 @@ int get_line(char s[], int lim)
     return i;
 }
 
-#define ALLOCSIZE 10000 /* size of avaiable space */
+#define ALLOCSIZE 10000 /* size of available space */
 
 static char allocbuf[ALLOCSIZE]; /* storage for alloc */
 static char *allocp = allocbuf;  /* next free position */
