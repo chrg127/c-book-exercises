@@ -1,4 +1,7 @@
-/* Make dcl recover from input errors. */
+/*
+ * Modify undcl so that it does not add redundant parentheses to
+ * declarations.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -18,8 +21,10 @@ char name[MAXTOKEN];        /* identifier name */
 char datatype[MAXTOKEN];    /* data type = char, int, etc. */
 char out[100];              /* output string */
 
+int prev_type;              /* type of second-to-last token */
+
 /* uncomment for the undcl version. */
-/* #define UNDCL */
+#define UNDCL
 
 #ifndef UNDCL
 
@@ -44,6 +49,13 @@ int main(void)
 
 #else
 
+/* for debugging purposes */
+int gettoken2()
+{
+    printf("prev = %d, cur = %d\n", prev_type, tokentype);
+    return gettoken();
+}
+
 /* undcl: convert word description to declaration */
 int main(void)
 {
@@ -53,10 +65,15 @@ int main(void)
     while (gettoken() != EOF) {
         strcpy(out, token);
         while (type = gettoken(), type != '\n') {
-            if (type == PARENS || type == BRACKETS)
-                strcat(out, token);
-            else if (type == '*') {
-                sprintf(temp, "(*%s)", out);
+            if (type == BRACKETS || type == PARENS) {
+                /* check if this is inside a pointer, and if so, add parentheses */
+                if (prev_type == '*') {
+                    sprintf(temp, "(%s)%s", out, token);
+                    strcpy(out, temp);
+                } else
+                    strcat(out, token);
+            } else if (type == '*') {
+                sprintf(temp, "*%s", out);
                 strcpy(out, temp);
             } else if (type == NAME) {
                 sprintf(temp, "%s %s", token, out);
@@ -80,6 +97,7 @@ int gettoken(void)
     int c;
     char *p = token;
 
+    prev_type = tokentype;
     while (c = getch(), c == ' ' || c == '\t')
         ;
     if (c == '(') {
