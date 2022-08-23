@@ -1,3 +1,8 @@
+/*
+ * Write a program to compare two files, printing the first line
+ * where they differ.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
