@@ -36,7 +36,7 @@ void free(void *ap);
  */
 unsigned ceil_div(unsigned n, unsigned b)
 {
-    return (n + b - 1) / b + 1;
+    return (n + b - 1) / b;
 }
 
 /* malloc: general purpose storage allocator */
